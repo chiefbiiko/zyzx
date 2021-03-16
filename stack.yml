@@ -15,15 +15,14 @@ Parameters:
       - prod
     Default: test
 
-SnapshotId:
-  Description: EBS snapshot id on which to base the volume
-  Type: String
-  Default: !Ref AWS::NoValue
+  SnapshotId:
+    Description: EBS snapshot id on which to base the volume
+    Type: String
 
-VolumeSizeGib:
-  Description: Size of the EBS volume in GiB
-  Type: Number
-  Default: 50
+  VolumeSizeGiB:
+    Description: Size of the EBS volume in GiB
+    Type: Number
+    Default: 50
 
   InstanceType:
     Description: EC2 instance type
@@ -154,9 +153,11 @@ Resources:
     Properties:
       AvailabilityZone: !Sub ${AWS::Region}a
       Encrypted: true
-      Size: !Ref VolumeSizeGib
+      Size: !Ref VolumeSizeGiB
       SnapshotId: !Ref SnapshotId
       VolumeType: gp3
 
 Outputs:
-  PublicIp: !GetAtt Instance.PublicIp
+  PublicIp:
+    Description: Public IP of the node
+    Value: !GetAtt Instance.PublicIp
