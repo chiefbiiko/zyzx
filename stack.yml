@@ -146,16 +146,14 @@ Resources:
   Instance:
     Type: AWS::EC2::Instance
     Properties: 
-      ImageId: !Ref InstanceImage
-      InstanceType: !Ref InstanceType
-      KeyName: !Ref PublicKeyName
       AvailabilityZone: !Sub ${AWS::Region}a
       SubnetId: !Ref Subnet
-      SecurityGroupIds:
-        - !Ref SecurityGroup
       Volumes:
-        - Device: /dev/sdh
+        - Device: /dev/sdh # CORRECT?
           VolumeId: !Ref Volume
+      LaunchTemplate:
+        LaunchTemplateId: !Ref LaunchTemplate
+        Version: !GetAtt LaunchTemplate.LatestVersionNumber
 
   Volume:
     Type: AWS::EC2::Volume
@@ -165,6 +163,22 @@ Resources:
       Size: !Ref VolumeSizeGiB
       # SnapshotId: !Ref SnapshotId
       VolumeType: gp3
+
+  LaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateData:
+        ImageId: !Ref InstanceImage
+        InstanceType: !Ref InstanceType
+        KeyName: !Ref PublicKeyName
+        SecurityGroupIds:
+          - !Ref SecurityGroup
+        UserData: !Base64
+          "Fn::Sub": |
+            echo moon
+            echo beam
+            echo ${AWS::StackName} > $HOME/${AWS::StackName}.txt
+      LaunchTemplateName: !Sub ${AWS::StackName}-launch-template
 
 Outputs:
   PublicIp:
