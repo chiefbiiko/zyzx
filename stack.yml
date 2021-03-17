@@ -19,6 +19,7 @@ Parameters:
   SnapshotId:
     Description: EBS snapshot id on which to base the volume
     Type: String
+    Default: AWS::NoValue
 
   VolumeSizeGiB:
     Description: Size of the EBS volume in GiB
