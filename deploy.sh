@@ -21,7 +21,7 @@ aws cloudformation create-change-set \
   --change-set-type $change_set_type \
   --template-body file://stack.yml
 
-if [[ $change_set_type -eq UPDATE ]]; then
+if [ "$change_set_type" = UPDATE ]; then
   change_set="$( \
     aws cloudformation describe-change-set \
       --stack-name $stack_name \
@@ -44,7 +44,7 @@ if [[ $change_set_type -eq UPDATE ]]; then
   instance_replacement="$(jq -r '.ResourceChange.Replacement' <<< "$instance")"
   instance_id="$(jq -r '.ResourceChange.PhysicalResourceId' <<< "$instance")"
 
-  if [ "$instance_replacement" == "True" ]; then
+  if [ "$instance_replacement" = True ]; then
     echo "detachin volume"
 
     aws ec2 detach-volume \
