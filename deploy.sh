@@ -1,13 +1,9 @@
 #!/bin/bash
 
-stack_exists() { # $stack_name
-  aws cloudformation describe-stacks --stack-name $1 >/dev/null 2>&1
-}
+source ./.env
+source ./util.sh
 
-stack_name=zyzx
-change_set_name=$stack_name-change-set-$(date +%s)
-
-if stack_exists $stack_name; then
+if stack_exists $STACK_NAME; then
   change_set_type=UPDATE
 else
   change_set_type=CREATE
@@ -16,15 +12,15 @@ fi
 echo "creatin change set"
 
 aws cloudformation create-change-set \
-  --stack-name $stack_name \
-  --change-set-name $change_set_name \
+  --stack-name $STACK_NAME \
+  --change-set-name $CHANGE_SET_NAME \
   --change-set-type $change_set_type \
   --template-body file://stack.yml
 
 change_set="$( \
   aws cloudformation describe-change-set \
-    --stack-name $stack_name \
-    --change-set-name $change_set_name \
+    --stack-name $STACK_NAME \
+    --change-set-name $CHANGE_SET_NAME \
 )"
 
 echo "$change_set"
@@ -45,7 +41,7 @@ if [[ "$instance_replacement" == "True" ]]; then
 
   stack="$( \
     aws cloudformation describe-stacks \
-      --stack-name $stack_name \
+      --stack-name $STACK_NAME \
   )"
 
   volume_id="$( \
@@ -61,5 +57,5 @@ if [[ "$instance_replacement" == "True" ]]; then
 fi
 
 aws cloudformation execute-change-set \
-  --stack-name $stack_name \
-  --change-set-name $change_set_name
+  --stack-name $STACK_NAME \
+  --change-set-name $CHANGE_SET_NAME
