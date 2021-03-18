@@ -29,6 +29,7 @@ change_set="$( \
 echo "$change_set"
 
 read -n 1 -p "execute change set? (y/n) " answer
+
 echo
 
 if [[ "${answer,,}" != "y" ]]; then exit 0; fi
