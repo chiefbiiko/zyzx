@@ -59,10 +59,13 @@ if [[ "$instance_replacement" == "True" ]]; then
     --volume-id $volume_id
 fi
 
-aws cloudformation execute-change-set \
+aws cloudformation wait change-set-create-complete \
   --stack-name $STACK_NAME \
   --change-set-name $CHANGE_SET_NAME
 
+aws cloudformation execute-change-set \
+  --stack-name $STACK_NAME \
+  --change-set-name $CHANGE_SET_NAME
 
 if [[ $existed -eq 0 ]]; then
   aws cloudformation wait stack-update-complete --stack-name $STACK_NAME
