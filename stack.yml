@@ -5,10 +5,32 @@ Parameters:
   #   Description: EBS snapshot id on which to base the volume
   #   Type: String
 
-  PublicKeyName:
+  # default
+  # 099720109477/ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-20210315
+  InstanceImage:
+    Description: Amazon machine image for the EC2 instance
+    Type: String
+    Default: ami-0fa37863afb290840
+
+  SSHPublicKeyName:
     Description: EC2 SSH public key name that is available within EC2
     Type: String
     Default: id_rsa_zyzx.pub
+
+  EC2Username:
+    Description: EC2 username
+    Type: String
+    Default: ubuntu
+
+  MoonbeamBinaryGzipURL:
+    Description: Github release URL serving a gzipped prebuilt moonbeam binary
+    Type: String
+    Default: https://github.com/nuggetdigital/moonbeam-binary/releases/download/v0.6.0/moonbeam-v0.6.0-ubuntu-20.04.gz
+
+  VolumeDataDir:
+    Description: Data dir path on the EBS volume
+    Type: String
+    Default: /var/lib/alphanet-data
 
   Environment:
     Description: Application environment
@@ -40,13 +62,6 @@ Parameters:
     Description: EC2 instance name
     Type: String
     Default: node
-  
-  # default
-  # 099720109477/ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-20210315
-  InstanceImage:
-    Description: Amazon machine image for the EC2 instance
-    Type: String
-    Default: ami-0fa37863afb290840
 
 Resources:
   VPC:
@@ -170,33 +185,63 @@ Resources:
       LaunchTemplateData:
         ImageId: !Ref InstanceImage
         InstanceType: !Ref InstanceType
-        KeyName: !Ref PublicKeyName
+        KeyName: !Ref SSHPublicKeyName
         SecurityGroupIds:
           - !Ref SecurityGroup
+        # NOTE: runs a single time at boot - not every restart
         UserData: !Base64
           "Fn::Sub": |
-            Content-Type: multipart/mixed; boundary="//"
-            MIME-Version: 1.0
-
-            --//
-            Content-Type: text/cloud-config; charset="us-ascii"
-            MIME-Version: 1.0
-            Content-Transfer-Encoding: 7bit
-            Content-Disposition: attachment; filename="cloud-config.txt"
-
-            #cloud-config
-            cloud_final_modules:
-            - [scripts-user, always]
-
-            --//
-            Content-Type: text/x-shellscript; charset="us-ascii"
-            MIME-Version: 1.0
-            Content-Transfer-Encoding: 7bit
-            Content-Disposition: attachment; filename="userdata.txt"
-
             #!/bin/bash
-            /bin/echo "Hello World" >> /tmp/testfile.txt
-            --//
+            /usr/bin/sudo /usr/sbin/adduser moonbase_service --system --no-create-home
+            /bin/mkdir ${VolumeDataDir}
+            /bin/chmod 0755 ${VolumeDataDir}
+            /bin/chown moonbase_service ${VolumeDataDir}
+            /bin/mkdir -p /home/${EC2Username}/bin
+            /bin/curl -sSf --proto '=https' --tlsv1.2 -L ${MoonbeamBinaryGzipURL} | gunzip > /home/${EC2Username}/bin/moonbeam
+            /bin/chmod 0755 /home/${EC2Username}/bin/moonbeam
+            /usr/bin/echo -e "
+              [Unit]
+              Description="Moonbase Alpha systemd service"
+              After=network.target
+              StartLimitIntervalSec=0
+
+              [Service]
+              Type=simple
+              Restart=on-failure
+              RestartSec=1ms
+              User=moonbase_service
+              SyslogIdentifier=moonbase
+              SyslogFacility=local7
+              KillSignal=SIGHUP
+              ExecStart=/home/${EC2Username}/bin/moonbeam \
+                --parachain-id 1000 \
+                --collator \
+                --author-id PUBLIC_KEY \
+                --port 30333 \
+                --rpc-port 9933 \
+                --ws-port 9944 \
+                --pruning=archive \
+                --rpc-methods=Safe \
+                --rpc-cors localhost,https://nugget.digital \
+                --log info \
+                --base-path ${VolumeDataDir} \
+                --chain alphanet \
+                --name ${AWS::StackName}-collator \
+                -- \
+                --port 30334 \
+                --rpc-port 9934 \
+                --ws-port 9945 \
+                --pruning=archive \
+                --name="${AWS::StackName}-collator-embedded-relayer"
+
+              [Install]
+              WantedBy=multi-user.target
+            " \
+            > /etc/systemd/system/moonbeam.service
+            /usr/bin/sudo systemctl enable moonbeam.service
+            /usr/bin/sudo systemctl start moonbeam.service
+            /usr/bin/sudo systemctl status moonbeam.service
+            /usr/bin/sudo journalctl -f -u moonbeam.service
       LaunchTemplateName: !Sub ${AWS::StackName}-launch-template
 
 Outputs:
