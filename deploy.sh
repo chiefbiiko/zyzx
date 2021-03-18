@@ -12,7 +12,7 @@ else
   change_set_type=CREATE
 fi
 
-echo "creatin change set"
+echo "creatin the change set"
 
 aws cloudformation create-change-set \
   --stack-name $STACK_NAME \
@@ -28,7 +28,7 @@ change_set="$( \
 
 echo "$change_set"
 
-read -n 1 -p "execute change set? (y/n) " answer
+read -n 1 -p "execute the change set? (y/n) " answer
 
 echo
 
@@ -41,7 +41,7 @@ instance="$( \
 instance_replacement="$(jq -r '.ResourceChange.Replacement' <<< "$instance")"
 
 if [[ "$instance_replacement" == "True" ]]; then
-  echo "detachin volume"
+  echo "detachin the ebs volume"
 
   stack="$( \
     aws cloudformation describe-stacks \
@@ -60,16 +60,24 @@ if [[ "$instance_replacement" == "True" ]]; then
     --volume-id $volume_id
 fi
 
+echo "awaitin the change set creation"
+
 aws cloudformation wait change-set-create-complete \
   --stack-name $STACK_NAME \
   --change-set-name $CHANGE_SET_NAME
 
+echo "executin the change set"
+
 aws cloudformation execute-change-set \
   --stack-name $STACK_NAME \
   --change-set-name $CHANGE_SET_NAME
+
+echo "awaitin the stack rollout"
 
 if [[ $existed -eq 0 ]]; then
   aws cloudformation wait stack-update-complete --stack-name $STACK_NAME
 else
   aws cloudformation wait stack-create-complete --stack-name $STACK_NAME
 fi
+
+echo "$STACK_NAME stack deployed"
