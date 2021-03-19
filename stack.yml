@@ -229,15 +229,13 @@ Resources:
               [Service]
               Type=simple
               Restart=on-failure
-              RestartSec=1ms
+              RestartSec=10s
               User=moonbase_service
               SyslogIdentifier=moonbase
               SyslogFacility=local7
               KillSignal=SIGHUP
               ExecStart=/home/${EC2Username}/bin/moonbeam \
                 --parachain-id 1000 \
-                --collator \
-                --author-id ${MoonbeamCollatorPublicAddress} \
                 --port 30333 \
                 --rpc-port 9933 \
                 --ws-port 9944 \
@@ -247,13 +245,13 @@ Resources:
                 --log info \
                 --base-path ${VolumeDataDir} \
                 --chain alphanet \
-                --name ${AWS::StackName}-collator \
+                --name ${AWS::StackName} \
                 -- \
                 --port 30334 \
                 --rpc-port 9934 \
                 --ws-port 9945 \
                 --pruning=archive \
-                --name="${AWS::StackName}-collator-embedded-relayer"
+                --name="${AWS::StackName}-embedded-relayer"
 
               [Install]
               WantedBy=multi-user.target
@@ -283,22 +281,22 @@ Resources:
               "api_key": "${MoonbeamGantreeAPIKey}",
               "project_id": "moonbase-alpha",
               "client_id": "${AWS::StackName}-relay",
-              "pckrc": "${MoonbeamProtocolClientKey}",
+              "pckrc": "",
               "metrics_host": "http://127.0.0.1:9615"
             }
             " \
-            > /var/lib/gantree/relay/.gnw_config.json
+            > ${VolumeDataDir}/gantree/relay/.gnw_config.json
 
             /usr/bin/echo -e "
             {
               "api_key": "${MoonbeamGantreeAPIKey}",
               "project_id": "moonbase-alpha",
               "client_id": "${AWS::StackName}-parachain",
-              "pckrc": "${MoonbeamProtocolClientKey}",
+              "pckrc": "",
               "metrics_host": "http://127.0.0.1:9616"
             }
             " \
-            > /var/lib/gantree/parachain/.gnw_config.json
+            > ${VolumeDataDir}/gantree/parachain/.gnw_config.json
 
             /usr/bin/echo -e "
             [Unit]
