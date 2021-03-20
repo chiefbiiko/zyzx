@@ -198,14 +198,18 @@ Resources:
         UserData: !Base64
           "Fn::Sub": |
             #!/bin/bash
-            /usr/bin/sudo /bin/mkfs -t xfs /dev/xvdh
+            /usr/bin/sudo /usr/sbin/mkfs -t xfs /dev/xvdh
 
-            /usr/bin/sudo mkdir /data
+            /usr/bin/sudo /bin/mkdir /data
 
-            uuid="$(/usr/bin/sudo blkid | /bin/grep xvdh | /bin/grep -oE '[a-f0-9]+-[a-f0-9]+-[a-f0-9]+-[a-f0-9]+-[a-f0-9]+')"
+            uuid="$( \
+              /usr/bin/sudo /usr/sbin/blkid \
+              | /bin/grep xvdh \
+              | /bin/grep -oE '[a-f0-9]+-[a-f0-9]+-[a-f0-9]+-[a-f0-9]+-[a-f0-9]+' \
+            )"
 
             /usr/bin/echo -e "
-              UUID=$uuid  $(dirname ${VolumeDataDir})  xfs  defaults,nofail,nobootwait  0  2
+              UUID=$uuid  $(/bin/dirname ${VolumeDataDir})  xfs  defaults,nofail,nobootwait  0  2
             " >> /etc/fstab
 
             /usr/bin/sudo /bin/mount -a
@@ -216,7 +220,7 @@ Resources:
 
             /bin/curl -sSf --proto '=https' --tlsv1.2 -L \
               ${MoonbeamBinaryGzipURL} \
-            | gunzip \
+            | /bin/gunzip \
             > /home/${EC2Username}/bin/moonbeam
 
             /bin/chmod 0755 /home/${EC2Username}/bin/moonbeam
