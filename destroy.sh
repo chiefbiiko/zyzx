@@ -6,6 +6,7 @@ source ./util.sh
 if ! stack_exists $STACK_NAME; then exit 0; fi
 
 read -n 1 -p "destroy the $STACK_NAME stack - are you sure? (y/n) " answer
+
 echo
 
 if [[ "${answer,,}" != "y" ]]; then exit 0; fi

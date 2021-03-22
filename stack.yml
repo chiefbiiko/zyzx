@@ -38,7 +38,7 @@ Parameters:
   MoonbeamBinaryGzipURL:
     Description: Github release URL serving a gzipped prebuilt moonbeam binary
     Type: String
-    Default: https://github.com/nuggetdigital/moonbeam-binary/releases/download/v0.6.1/moonbeam-v0.6.1-ubuntu-20.04.gz
+    Default: https://github.com/nuggetdigital/moonbeam-binary/releases/download/v0.6.2/moonbeam-v0.6.2-ubuntu-20.04.gz
 
   MoonbeamGantreeNodeWatchdogTarballURL:
     Description: Github release URL serving a tarballed prebuilt gantree watchdog binary
